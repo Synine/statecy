@@ -4,7 +4,7 @@
 
 Statecy is a simple finite-state machine library for Go.
 
-PLACEHOLDER - TODO: documentation
+TODO: documentation
 
 # Installation
 

@@ -1,3 +1,3 @@
 # `statecy` - FSM Transition
 
-PLACEHOLDER: FSM Transition Documentation
+TODO: FSM Transition Documentation
