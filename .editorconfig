@@ -1,0 +1,15 @@
+
+# Topmost editorconfig file
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# Match for Go
+[*.go]
+# Set default charset
+charset = utf-8
+indent_style = tab
+indent_size = 8
+
