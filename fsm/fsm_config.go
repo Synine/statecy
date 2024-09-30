@@ -10,6 +10,8 @@ package fsm
 // this ONLY the initialization methods, not the
 type InitializationParams[T comparable] struct {
 	// States is a list of states that the FSM is allowed to be in
-	States  []T
-	Initial T
+	States      []T
+	Initial     T
+	OnExitFunc  func(TransitionContext[T])
+	OnEnterfunc func(TransitionContext[T])
 }
