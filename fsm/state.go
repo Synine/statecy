@@ -5,8 +5,8 @@ package fsm
 
 type State[T comparable] struct {
 	name    T
-	OnEnter func(TransitionContext[T])
-	OnExit  func(TransitionContext[T])
+	onEnter func(TransitionContext[T])
+	onExit  func(TransitionContext[T])
 }
 
 func NewState[T comparable](
@@ -16,8 +16,8 @@ func NewState[T comparable](
 ) State[T] {
 	return State[T]{
 		name:    name,
-		OnEnter: onEnterFunc,
-		OnExit:  onExitFunc,
+		onEnter: onEnterFunc,
+		onExit:  onExitFunc,
 	}
 }
 

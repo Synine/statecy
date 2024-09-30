@@ -19,7 +19,7 @@ type FSM[ST comparable] struct {
 	transitions  map[ST]Transition[ST]
 }
 
-func NewSimpleFSM[ST comparable](params InitializationParams[ST]) (*FSM[ST], error) {
+func NewSimpleFSM[ST comparable](params SimpleInitializationParams[ST]) (*FSM[ST], error) {
 	fsmStates := make(map[ST]State[ST])
 	var initialState *State[ST]
 
@@ -86,12 +86,12 @@ func (f *FSM[ST]) Transition(transition ST) error {
 
 		// transitions only if handler is successful
 
-		if transition.From.OnExit != nil {
-			transition.From.OnExit(transition.Context())
+		if transition.From.onExit != nil {
+			transition.From.onExit(transition.Context())
 		}
 		f.currentState = transition.To
-		if transition.To.OnEnter != nil {
-			transition.To.OnEnter(transition.Context())
+		if transition.To.onEnter != nil {
+			transition.To.onEnter(transition.Context())
 		}
 	}
 

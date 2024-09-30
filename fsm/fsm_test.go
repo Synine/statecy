@@ -11,7 +11,7 @@ import (
 func TestFSM(t *testing.T) {
 	{
 		// success case
-		successFsmConfig := InitializationParams[string]{
+		successFsmConfig := SimpleInitializationParams[string]{
 			States:  []string{"foo", "bar", "baz"},
 			Initial: "foo",
 		}
@@ -27,7 +27,7 @@ func TestFSM(t *testing.T) {
 
 	// failure case
 	{
-		failureFsmConfig := InitializationParams[string]{
+		failureFsmConfig := SimpleInitializationParams[string]{
 			States:  []string{"foo", "bar", "baz"},
 			Initial: "qux",
 		}
@@ -43,7 +43,7 @@ func TestFSM(t *testing.T) {
 func TestFSMInitialization(t *testing.T) {
 	{
 		// success case
-		successFsmConfig := InitializationParams[string]{
+		successFsmConfig := SimpleInitializationParams[string]{
 			States:  []string{"foo", "bar", "baz"},
 			Initial: "foo",
 		}
@@ -64,7 +64,7 @@ func TestFSMInitialization(t *testing.T) {
 }
 
 func TestFSMUnknownTransition(t *testing.T) {
-	successFsmConfig := InitializationParams[string]{
+	successFsmConfig := SimpleInitializationParams[string]{
 		States:  []string{"foo", "bar", "baz"},
 		Initial: "bar",
 	}
@@ -85,7 +85,7 @@ func TestFSMUnknownTransition(t *testing.T) {
 }
 
 func TestFSMTransition(t *testing.T) {
-	successFsmConfig := InitializationParams[string]{
+	successFsmConfig := SimpleInitializationParams[string]{
 		States:  []string{"foo", "bar", "baz"},
 		Initial: "bar",
 	}
@@ -123,7 +123,7 @@ func TestFSMTransition(t *testing.T) {
 }
 
 func TestFSMErrorTransition(t *testing.T) {
-	successFsmConfig := InitializationParams[string]{
+	successFsmConfig := SimpleInitializationParams[string]{
 		States:  []string{"foo", "bar", "baz"},
 		Initial: "bar",
 	}
@@ -158,7 +158,7 @@ func TestFSMEnterExitTransition(t *testing.T) {
 	onExitCalled := false
 	onExitCalledTwice := false
 	onEnterCalled := false
-	successFsmConfig := InitializationParams[string]{
+	successFsmConfig := SimpleInitializationParams[string]{
 		States:  []string{"foo", "bar", "baz"},
 		Initial: "bar",
 		OnExitFunc: func(tc TransitionContext[string]) {
@@ -220,7 +220,7 @@ func TestFSMEnterExitErrorTransition(t *testing.T) {
 	onExitCalled := false
 	onExitCalledTwice := false
 	onEnterCalled := false
-	successFsmConfig := InitializationParams[string]{
+	successFsmConfig := SimpleInitializationParams[string]{
 		States:  []string{"foo", "bar", "baz"},
 		Initial: "bar",
 		OnExitFunc: func(tc TransitionContext[string]) {
