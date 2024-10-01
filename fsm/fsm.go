@@ -11,7 +11,15 @@ import (
 	"sync"
 )
 
+type FSMType string
+
+const (
+	SimpleFSM    FSMType = "simple"
+	AnonymousFSM FSMType = "anonymous"
+)
+
 type FSM[ST comparable] struct {
+	fsmType      FSMType
 	mutex        sync.RWMutex
 	states       map[ST]State[ST]
 	initialState *State[ST]
@@ -36,6 +44,31 @@ func NewSimpleFSM[ST comparable](params SimpleInitializationParams[ST]) (*FSM[ST
 	}
 
 	return &FSM[ST]{
+		fsmType:      SimpleFSM,
+		states:       fsmStates,
+		initialState: initialState,
+		currentState: nil,
+	}, nil
+}
+
+func NewAnonymousFSM[ST comparable](params SimpleInitializationParams[ST]) (*FSM[ST], error) {
+	fsmStates := make(map[ST]State[ST])
+	var initialState *State[ST]
+
+	for _, fsmState := range params.States {
+		newState := NewState(fsmState, params.OnEnterfunc, params.OnExitFunc)
+		if params.Initial == fsmState {
+			initialState = &newState
+		}
+		fsmStates[fsmState] = newState
+	}
+
+	if initialState == nil {
+		return nil, errors.New("initial state not found")
+	}
+
+	return &FSM[ST]{
+		fsmType:      AnonymousFSM,
 		states:       fsmStates,
 		initialState: initialState,
 		currentState: nil,
@@ -66,35 +99,59 @@ func (f *FSM[ST]) Transition(transition ST) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	if transition, transitionExists := f.transitions[transition]; !transitionExists {
-		return errors.New("transition not found")
-	} else if transition.From != nil &&
-		transition.From.Name() == f.currentState.Name() {
+	if f.fsmType == SimpleFSM {
+		if transition, transitionExists := f.transitions[transition]; !transitionExists {
+			return errors.New("transition not found")
+		} else if transition.From != nil &&
+			transition.From.Name() == f.currentState.Name() {
 
-		if transition.Handler != nil {
-			// TODO: write a better error-handler, with support to
-			// return the following:
-			// 1. error-code
-			// 2. error-messages
-			// 3. arguments (error-data)
-			// 4. state-change override (if required)
-			err := transition.Handler(f.context(transition))
-			if err != nil {
-				return err
+			if transition.Handler != nil {
+				// TODO: write a better error-handler, with support to
+				// return the following:
+				// 1. error-code
+				// 2. error-messages
+				// 3. arguments (error-data)
+				// 4. state-change override (if required)
+				err := transition.Handler(f.context(transition))
+				if err != nil {
+					return err
+				}
+			}
+
+			// transitions only if handler is successful
+
+			if transition.From.onExit != nil {
+				transition.From.onExit(transition.context())
+			}
+			f.currentState = transition.To
+			if transition.To.onEnter != nil {
+				transition.To.onEnter(transition.context())
 			}
 		}
 
-		// transitions only if handler is successful
-
-		if transition.From.onExit != nil {
-			transition.From.onExit(transition.context())
-		}
-		f.currentState = transition.To
-		if transition.To.onEnter != nil {
-			transition.To.onEnter(transition.context())
+	} else if f.fsmType == AnonymousFSM {
+		// in an anonymous FSM, the next state itself is the transition name
+		if nextState, stateExists := f.states[transition]; !stateExists {
+			return errors.New("transition not found")
+		} else if nextState.Name() != f.currentState.Name() {
+			// TODO: better way to do this?
+			f.currentState.onExit(TransitionContext[ST]{
+				Name: transition,
+				From: f.currentState.Name(),
+				To:   nextState.Name(),
+				// DO WE NEED THIS??
+				CheckCurrentState: true,
+			})
+			f.currentState = &nextState
+			f.currentState.onEnter(TransitionContext[ST]{
+				Name: transition,
+				From: f.currentState.Name(),
+				To:   nextState.Name(),
+				// DO WE NEED THIS??
+				CheckCurrentState: true,
+			})
 		}
 	}
-
 	return nil
 }
 
