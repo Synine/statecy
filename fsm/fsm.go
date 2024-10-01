@@ -78,7 +78,7 @@ func (f *FSM[ST]) Transition(transition ST) error {
 			// 2. error-messages
 			// 3. arguments (error-data)
 			// 4. state-change override (if required)
-			err := transition.Handler(f.Context(transition))
+			err := transition.Handler(f.context(transition))
 			if err != nil {
 				return err
 			}
@@ -87,11 +87,11 @@ func (f *FSM[ST]) Transition(transition ST) error {
 		// transitions only if handler is successful
 
 		if transition.From.onExit != nil {
-			transition.From.onExit(transition.Context())
+			transition.From.onExit(transition.context())
 		}
 		f.currentState = transition.To
 		if transition.To.onEnter != nil {
-			transition.To.onEnter(transition.Context())
+			transition.To.onEnter(transition.context())
 		}
 	}
 
@@ -129,7 +129,7 @@ func (f *FSM[ST]) AddTransition(name ST, from ST, to ST, handler func(*FSMContex
 	return nil
 }
 
-func (f *FSM[ST]) Context(transition Transition[ST]) *FSMContext[ST] {
+func (f *FSM[ST]) context(transition Transition[ST]) *FSMContext[ST] {
 	// copy the current state and initial state
 	initialState := f.currentState.Copy()
 	currentState := f.currentState.Copy()
@@ -138,7 +138,7 @@ func (f *FSM[ST]) Context(transition Transition[ST]) *FSMContext[ST] {
 		InitialState: &initialState,
 		CurrentState: &currentState,
 		states:       f.states,
-		Transition:   transition.Context(),
+		Transition:   transition.context(),
 	}
 }
 

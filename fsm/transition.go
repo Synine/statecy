@@ -18,7 +18,7 @@ type Transition[ST comparable] struct {
 	Handler           func(*FSMContext[ST]) error
 }
 
-func (t *Transition[ST]) Context() TransitionContext[ST] {
+func (t *Transition[ST]) context() TransitionContext[ST] {
 	return TransitionContext[ST]{
 		Name:              t.Name,
 		From:              t.From.Name(),
