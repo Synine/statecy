@@ -19,12 +19,14 @@ const (
 )
 
 type FSM[ST comparable] struct {
-	fsmType      FSMType
-	mutex        sync.RWMutex
-	states       map[ST]State[ST]
-	initialState *State[ST]
-	currentState *State[ST]
-	transitions  map[ST]Transition[ST]
+	fsmType           FSMType
+	mutex             sync.RWMutex
+	states            map[ST]State[ST]
+	initialState      *State[ST]
+	currentState      *State[ST]
+	globalOnEnterFunc func(TransitionContext[ST])
+	globalOnExitFunc  func(TransitionContext[ST])
+	transitions       map[ST]Transition[ST]
 }
 
 func NewSimpleFSM[ST comparable](params SimpleInitializationParams[ST]) (*FSM[ST], error) {
@@ -119,13 +121,33 @@ func (f *FSM[ST]) Transition(transition ST) error {
 			}
 
 			// transitions only if handler is successful
+			//
+			// -------|
+			//        |  onExit(prev)
+			//        |----------| global onExit(prev) {...}
+			//        |          |
+			//        |-| local  |
+			//        *-|--------|--> State1 -> State2
+			//        |-| local  |
+			//        |          |
+			//        |----------| global onEntry(next) {...}
+			//        | onEntry(next) 
+	 		// -------|
 
+			// global transition hook
+			if f.globalOnExitFunc != nil {
+				f.globalOnExitFunc(transition.context())
+			}
+			// transition hook
 			if transition.From.onExit != nil {
 				transition.From.onExit(transition.context())
 			}
 			f.currentState = transition.To
 			if transition.To.onEnter != nil {
 				transition.To.onEnter(transition.context())
+			}
+			if f.globalOnEnterFunc != nil {
+				f.globalOnEnterFunc(transition.context())
 			}
 		}
 
@@ -135,6 +157,12 @@ func (f *FSM[ST]) Transition(transition ST) error {
 			return errors.New("transition not found")
 		} else if nextState.Name() != f.currentState.Name() {
 			// TODO: better way to do this?
+			f.globalOnExitFunc(TransitionContext[ST]{
+				Name: transition,
+				From: f.currentState.Name(),
+				To: nextState.Name(),
+				CheckCurrentState: true,
+			})
 			f.currentState.onExit(TransitionContext[ST]{
 				Name: transition,
 				From: f.currentState.Name(),
@@ -148,6 +176,12 @@ func (f *FSM[ST]) Transition(transition ST) error {
 				From: f.currentState.Name(),
 				To:   nextState.Name(),
 				// DO WE NEED THIS??
+				CheckCurrentState: true,
+			})
+			f.globalOnEnterFunc(TransitionContext[ST]{
+				Name: transition,
+				From: f.currentState.Name(),
+				To: nextState.Name(),
 				CheckCurrentState: true,
 			})
 		}
